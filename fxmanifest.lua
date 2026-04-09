@@ -5,7 +5,7 @@ lua54 'yes'
 name        'cx-hud'
 author      'Cxsper'
 description 'A shitty hud or something like that.'
-version     '4.2.0'
+version     '4.3.0'
 
 ui_page 'html/index.html'
 
@@ -24,6 +24,11 @@ shared_scripts {
 }
 
 client_scripts {
+    'client/utils.lua',
+    'client/minimap.lua',
+    'client/vehicle.lua',
+    'client/status.lua',
+    'client/events.lua',
     'client/main.lua',
 }
 

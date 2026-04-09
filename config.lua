@@ -18,6 +18,7 @@ Config.Logo = {
 Config.RedlineThreshold = 85
 
 --seatbelt shite
+Config.EnableSeatbelt    = true -- do u even want to use our seatbelt? if not set it to false 
 Config.SeatbeltEject      = true
 Config.SeatbeltEjectSpeed = 60.0
 Config.SeatbeltBodyThresh = 500.0
