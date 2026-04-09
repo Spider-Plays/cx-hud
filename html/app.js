@@ -18,9 +18,48 @@ const cineBottom    = document.getElementById('cinebarBottom')
 const gearBadge     = document.getElementById('gearVal')
 const redlineMarker = document.getElementById('redlineMarker')
 
+const elVoiceMode  = document.getElementById('voiceMode')
+const elPlayerId   = document.getElementById('playerId')
+const elJobLabel   = document.getElementById('jobLabel')
+const elJobGrade   = document.getElementById('jobGrade')
+const elCash       = document.getElementById('cash')
+const elBank       = document.getElementById('bank')
+const elClock      = document.getElementById('clock')
+const elCharName   = document.getElementById('charName')
+const elStreet     = document.getElementById('street')
+const elZone       = document.getElementById('zone')
+const elDirection  = document.getElementById('direction')
+const elHealthBar  = document.getElementById('healthBar')
+const elArmorBar   = document.getElementById('armorBar')
+const elHungerBar  = document.getElementById('hungerBar')
+const elThirstBar  = document.getElementById('thirstBar')
+const elStressBar  = document.getElementById('stressBar')
+const elStaminaBar = document.getElementById('staminaBar')
+const elCompHealth = document.getElementById('comp-health')
+const elCompHunger = document.getElementById('comp-hunger')
+const elCompThirst = document.getElementById('comp-thirst')
+const elStatusRow  = document.getElementById('statusRow')
+const elSpeedVal   = document.getElementById('speedVal')
+const elSpeedUnit  = document.getElementById('speedUnit')
+const elRpmVal     = document.getElementById('rpmVal')
+const elVehName    = document.getElementById('vehName')
+const elFuelPct    = document.getElementById('fuelPct')
+const elEnginePct  = document.getElementById('enginePct')
+const elSeatbelt   = document.getElementById('seatbeltPill')
+const elSeatbeltSp = elSeatbelt?.querySelector('span')
+const elLightLeft  = document.getElementById('lightIndicatorLeft')
+const elLightRight = document.getElementById('lightIndicatorRight')
+const elLightHaz   = document.getElementById('lightHazard')
+const elLightHead  = document.getElementById('lightHeadlights')
+const elLightHigh  = document.getElementById('lightHighbeam')
+
 const SAVE_KEY   = 'cx_hud_state_v1'
 const SPEED_KEY  = 'cx_hud_speed_v1'
 const AVATAR_KEY = 'cx_hud_avatar_v1'
+
+const RES_NAME = typeof window.GetParentResourceName === 'function'
+    ? window.GetParentResourceName()
+    : 'cx-hud'
 
 const hudState = {
     portrait: true, charname: true, voice: true, playerid: false,
@@ -93,9 +132,8 @@ function applyVisibility() {
     if (whereAmI) whereAmI.classList.toggle('hidden', !hudState.minimap)
     if (wpWrap)   wpWrap.classList.toggle('hidden',   !hudState.minimap)
 
-    const statusRow = document.getElementById('statusRow')
-    if (statusRow) {
-        statusRow.classList.toggle('hidden', !(hudState.health || hudState.armor || hudState.hunger || hudState.thirst))
+    if (elStatusRow) {
+        elStatusRow.classList.toggle('hidden', !(hudState.health || hudState.armor || hudState.hunger || hudState.thirst))
     }
 
     carCard.classList.toggle('hidden', !hudState.vehicle)
@@ -109,13 +147,18 @@ function bootHudState() {
     applyVisibility()
 }
 
-const RING_CIRC = 2 * Math.PI * 20
+const RING_CIRC     = 2 * Math.PI * 20
+const RING_CIRC_STR = RING_CIRC + ' ' + RING_CIRC
 
-function setRing(id, value) {
-    const el = document.getElementById(id)
+function initRings() {
+    for (const el of [elHealthBar, elArmorBar, elHungerBar, elThirstBar, elStressBar, elStaminaBar]) {
+        if (el) el.style.strokeDasharray = RING_CIRC_STR
+    }
+}
+
+function setRing(el, value) {
     if (!el) return
     const pct = Math.max(0, Math.min(100, value || 0))
-    el.style.strokeDasharray  = RING_CIRC + ' ' + RING_CIRC
     el.style.strokeDashoffset = RING_CIRC - (pct / 100) * RING_CIRC
 }
 
@@ -140,40 +183,32 @@ function rpmDisplay(pct) {
     return Math.round((Math.max(0, Math.min(100, pct || 0)) / 100) * 8000).toLocaleString()
 }
 
-function setWarn(pillId, barId, value, threshold) {
-    const pill = document.getElementById(pillId)
-    const bar  = document.getElementById(barId)
-    const low  = value <= threshold
-    if (pill) pill.classList.toggle('warn-low', low)
-    if (bar)  bar.classList.toggle('warn-low',  low)
+function setWarn(pillEl, barEl, value, threshold) {
+    const low = value <= threshold
+    if (pillEl) pillEl.classList.toggle('warn-low', low)
+    if (barEl)  barEl.classList.toggle('warn-low',  low)
 }
 
-function setArcWarn(arcId, value, threshold) {
-    const el = document.getElementById(arcId)
+function setArcWarn(el, value, threshold) {
     if (el) el.classList.toggle('warn-low', value <= threshold)
 }
 
 function refreshLights(data) {
     if (!data) return
     const hz = !!data.hazard
-    flipLight('lightIndicatorLeft',  hz || !!data.indicatorLeft)
-    flipLight('lightIndicatorRight', hz || !!data.indicatorRight)
-    flipLight('lightHazard',    hz)
-    flipLight('lightHeadlights', !!data.headlights)
-    flipLight('lightHighbeam',   !!data.highbeam)
+    flipLight(elLightLeft,  hz || !!data.indicatorLeft)
+    flipLight(elLightRight, hz || !!data.indicatorRight)
+    flipLight(elLightHaz,   hz)
+    flipLight(elLightHead,  !!data.headlights)
+    flipLight(elLightHigh,  !!data.highbeam)
 }
 
-function flipLight(id, on) {
-    const el = document.getElementById(id)
+function flipLight(el, on) {
     if (el) el.classList.toggle('active', on)
 }
 
-function resName() {
-    return typeof window.GetParentResourceName === 'function' ? window.GetParentResourceName() : 'cx-hud'
-}
-
 function nuiPost(endpoint, body) {
-    fetch('https://' + resName() + '/' + endpoint, {
+    fetch('https://' + RES_NAME + '/' + endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body || {}),
@@ -241,6 +276,7 @@ function buildDialTicks() {
     const total = (majorCount - 1) * (minorPerMajor + 1) + 1
     const step  = sweep / (total - 1)
     const NS    = 'http://www.w3.org/2000/svg'
+    const frag  = document.createDocumentFragment()
     for (let i = 0; i < total; i++) {
         const major   = i % (minorPerMajor + 1) === 0
         const len     = major ? majorLen : minorLen
@@ -255,11 +291,13 @@ function buildDialTicks() {
         line.setAttribute('x2', ix.toFixed(2))
         line.setAttribute('y2', iy.toFixed(2))
         line.setAttribute('class', major ? 'dial-tick-major' : 'dial-tick-minor')
-        tickGroup.appendChild(line)
+        frag.appendChild(line)
     }
+    tickGroup.appendChild(frag)
 }
 
 buildDialTicks()
+initRings()
 
 function applyLogo(logoConfig) {
     if (!logoConfig) return
@@ -385,73 +423,76 @@ if (unitToggle) {
     })
 }
 
-window.addEventListener('message', function(ev) {
-    const action = ev.data?.action
-    const data   = ev.data?.data
-
-    if (action === 'initConfig') {
+const handlers = {
+    initConfig(data) {
         if (data?.colors)     injectColors(data.colors)
         if (data?.defaults)   applyConfigDefaults(data.defaults)
         if (data?.thresholds) window.__cxThresh = data.thresholds
         if (data?.redline)    { redlineRpm = data.redline; buildRedlineMarker(redlineRpm) }
         if (data?.logo)       applyLogo(data.logo)
         bootHudState()
-        return
-    }
+    },
 
-    if (action === 'versionInfo') {
+    versionInfo(data) {
         const badge = document.getElementById('versionBadge')
         if (!badge) return
         badge.textContent = 'v' + data.current
         badge.classList.toggle('version-outdated', !!data.outdated)
         if (data.outdated) badge.title = 'Update available: v' + data.latest
-    }
+    },
 
-    if (action === 'toggleHud') {
+    toggleHud(data) {
         theWholeHud.classList.toggle('hidden', !data.visible)
-    }
+    },
 
-    if (action === 'setPaused') {
+    setPaused(data) {
         theWholeHud.style.visibility = data.paused ? 'hidden' : ''
-    }
+    },
 
-    if (action === 'openMenu') {
+    openMenu() {
         openSettings()
-    }
+    },
 
-    if (action === 'updateStatus') {
-        setTxt('voiceMode', data.voice)
-        setTxt('playerId',  data.id)
-        setTxt('jobLabel',  data.job)
-        setTxt('jobGrade',  data.grade)
-        setTxt('cash',      data.cash)
-        setTxt('bank',      data.bank)
-        setTxt('clock',     data.time)
-        if (data.charName) setTxt('charName', data.charName)
-        setTxt('street',    data.crossing?.length ? data.street + ' / ' + data.crossing : data.street)
-        setTxt('zone',      data.zone)
-        setTxt('direction', data.direction)
+    updateStatus(data) {
+        if (data.voice     !== undefined) elVoiceMode.textContent = data.voice
+        if (data.id        !== undefined) elPlayerId.textContent  = data.id
+        if (data.job       !== undefined) elJobLabel.textContent  = data.job
+        if (data.grade     !== undefined) elJobGrade.textContent  = data.grade
+        if (data.cash      !== undefined) elCash.textContent      = data.cash
+        if (data.bank      !== undefined) elBank.textContent      = data.bank
+        if (data.time      !== undefined) elClock.textContent     = data.time
+        if (data.charName  !== undefined) elCharName.textContent  = data.charName
+        if (data.zone      !== undefined) elZone.textContent      = data.zone
+        if (data.direction !== undefined) elDirection.textContent = data.direction
 
-        setRing('healthBar',  data.health)
-        setRing('armorBar',   data.armour)
-        setRing('hungerBar',  data.hunger)
-        setRing('thirstBar',  data.thirst)
-        setRing('stressBar',  data.stress)
-        setRing('staminaBar', data.stamina)
+        if (data.street !== undefined || data.crossing !== undefined) {
+            if (data.street   !== undefined) elStreet._lastStreet   = data.street
+            if (data.crossing !== undefined) elStreet._lastCrossing = data.crossing
+            const s = elStreet._lastStreet   || ''
+            const c = elStreet._lastCrossing || ''
+            elStreet.textContent = c.length ? s + ' / ' + c : s
+        }
 
-        talkDot.classList.toggle('talking',  !!data.talking)
-        stressBubble.classList.toggle('visible',  !!data.showStress)
-        staminaBubble.classList.toggle('visible', !!data.showStamina)
+        if (data.health  !== undefined) setRing(elHealthBar,  data.health)
+        if (data.armour  !== undefined) setRing(elArmorBar,   data.armour)
+        if (data.hunger  !== undefined) setRing(elHungerBar,  data.hunger)
+        if (data.thirst  !== undefined) setRing(elThirstBar,  data.thirst)
+        if (data.stress  !== undefined) setRing(elStressBar,  data.stress)
+        if (data.stamina !== undefined) setRing(elStaminaBar, 100 - (data.stamina || 0))
 
-        updateWaypointChip(data.waypointDist || null)
+        if (data.talking     !== undefined) talkDot.classList.toggle('talking',       !!data.talking)
+        if (data.showStress  !== undefined) stressBubble.classList.toggle('visible',  !!data.showStress)
+        if (data.showStamina !== undefined) staminaBubble.classList.toggle('visible', !!data.showStamina)
+
+        if (data.waypointDist !== undefined) updateWaypointChip(data.waypointDist || null)
 
         const wt = window.__cxThresh || { health: 20, hunger: 15, thirst: 15 }
-        setWarn('comp-health', 'healthBar', data.health, wt.health)
-        setWarn('comp-hunger', 'hungerBar', data.hunger, wt.hunger)
-        setWarn('comp-thirst', 'thirstBar', data.thirst, wt.thirst)
-    }
+        if (data.health !== undefined) setWarn(elCompHealth, elHealthBar, data.health, wt.health)
+        if (data.hunger !== undefined) setWarn(elCompHunger, elHungerBar, data.hunger, wt.hunger)
+        if (data.thirst !== undefined) setWarn(elCompThirst, elThirstBar, data.thirst, wt.thirst)
+    },
 
-    if (action === 'updateVehicle') {
+    updateVehicle(data) {
         if (!hudState.vehicle) {
             carCard.classList.add('hidden')
             lightyBois.classList.add('hidden')
@@ -463,37 +504,40 @@ window.addEventListener('message', function(ev) {
 
         if (!data.show) return
 
-        setTxt('speedVal',  data.speed)
-        setTxt('speedUnit', data.unit)
-        setTxt('gearVal',   data.gear)
-        setTxt('rpmVal',    rpmDisplay(data.rpm))
-        if (data.vehName) setTxt('vehName', data.vehName)
+        elSpeedVal.textContent  = data.speed
+        elSpeedUnit.textContent = data.unit
+        gearBadge.textContent   = data.gear
+        elRpmVal.textContent    = rpmDisplay(data.rpm)
+        if (data.vehName) elVehName.textContent = data.vehName
 
         updateSpeedRing(data.speed)
-        setSideArc(petrolArc, document.getElementById('fuelPct'),   data.fuel)
-        setSideArc(motorArc,  document.getElementById('enginePct'), data.engine)
+        setSideArc(petrolArc, elFuelPct,   data.fuel)
+        setSideArc(motorArc,  elEnginePct, data.engine)
 
         handleGearChange(data.gear, data.rpm)
         applyRedlineFlash(data.rpm)
 
-        const beltPill = document.getElementById('seatbeltPill')
-        if (beltPill) {
-            const span = beltPill.querySelector('span')
-            if (span) span.textContent = data.seatbelt ? 'Belt On' : 'Belt Off'
-            beltPill.classList.toggle('on',        !!data.seatbelt)
-            beltPill.classList.toggle('belt-warn', !data.seatbelt)
+        if (elSeatbelt) {
+            if (elSeatbeltSp) elSeatbeltSp.textContent = data.seatbelt ? 'Belt On' : 'Belt Off'
+            elSeatbelt.classList.toggle('on',        !!data.seatbelt)
+            elSeatbelt.classList.toggle('belt-warn', !data.seatbelt)
         }
 
         const vt = window.__cxThresh || { fuel: 10, engine: 20 }
-        setArcWarn('fuelArc',   data.fuel,   vt.fuel)
-        setArcWarn('engineArc', data.engine, vt.engine)
+        setArcWarn(petrolArc, data.fuel,   vt.fuel)
+        setArcWarn(motorArc,  data.engine, vt.engine)
 
         if (data.lights) refreshLights(data.lights)
-    }
+    },
 
-    if (action === 'updateLights') {
+    updateLights(data) {
         refreshLights(data)
-    }
+    },
+}
+
+window.addEventListener('message', ev => {
+    const { action, data } = ev.data ?? {}
+    handlers[action]?.(data)
 })
 
 bootHudState()
