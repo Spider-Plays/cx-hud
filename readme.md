@@ -33,6 +33,8 @@ ensure pma-voice
 ensure qbx_core
 ensure cx-hud
 ```
+I also recommend going into `qbx_smallresources` > `qbx_hudcomponents` > `config.lua` 
+- Set the `hudComponents` var to `hudComponents = {1, 2, 3, 4, 6, 7, 9, 13, 14, 19, 20, 21, 22},`
 
 ## Configuration
 
