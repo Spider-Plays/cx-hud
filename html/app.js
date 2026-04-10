@@ -1,4 +1,5 @@
 const theWholeHud   = document.getElementById('hud')
+const elCrosshair   = document.getElementById('crosshairEl')
 const carCard       = document.getElementById('vehicleCard')
 const lightyBois    = document.getElementById('lightsPanel')
 const stressBubble  = document.getElementById('stressPill')
@@ -28,6 +29,11 @@ const elCharName   = document.getElementById('charName')
 const elStreet     = document.getElementById('street')
 const elZone       = document.getElementById('zone')
 const elDirection  = document.getElementById('direction')
+const elWeaponPanel = document.getElementById('weaponPanel')
+const elWeaponImg   = document.getElementById('weaponImg')
+const elWeaponFallbackIcon = document.getElementById('weaponFallbackIcon')
+const elWeaponName  = document.getElementById('weaponName')
+const elWeaponAmmo  = document.getElementById('weaponAmmo')
 const elHealthBar  = document.getElementById('healthBar')
 const elArmorBar   = document.getElementById('armorBar')
 const elHungerBar  = document.getElementById('hungerBar')
@@ -53,7 +59,8 @@ const elLightHead  = document.getElementById('lightHeadlights')
 const elLightHigh  = document.getElementById('lightHighbeam')
 
 
-const SAVE_KEY   = 'cx_hud_state_v1'
+const SAVE_KEY       = 'cx_hud_state_v1'
+const CH_COLOR_KEY   = 'cx_hud_chcolor_v1'
 const SPEED_KEY  = 'cx_hud_speed_v1'
 const AVATAR_KEY = 'cx_hud_avatar_v1'
 
@@ -64,11 +71,12 @@ const RES_NAME = typeof window.GetParentResourceName === 'function'
 const hudState = {
     portrait: true, charname: true, voice: true, playerid: false,
     logo: true, job: true, cash: true, bank: true,
-    minimap: true, health: true, armor: true, hunger: true, thirst: true,
-    vehicle: true, lights: true, cinebars: false,
+    minimap: false, weapon: true, health: true, armor: true, hunger: true, thirst: true,
+    vehicle: true, lights: true, cinebars: false, crosshair: false,
 }
 
-let currentUnit    = null
+let currentUnit       = null
+let canShowCrosshair  = false  // true only when holding a ranged weapon (set by Lua)
 let redlineRpm     = 85
 let hadWaypoint    = false
 let lastGear       = -1
@@ -139,14 +147,10 @@ function applyVisibility() {
         const el = document.getElementById('comp-' + key)
         if (el) el.classList.toggle('hidden', !hudState[key])
     }
-    const tlCard = document.querySelector('.tl-card')
-        if (tlCard) {
-            const showTlCard = hudState.portrait || hudState.charname || hudState.playerid
-            tlCard.classList.toggle('hidden', !showTlCard)
-        }
 
     if (whereAmI) whereAmI.classList.toggle('hidden', !hudState.minimap)
     if (wpWrap)   wpWrap.classList.toggle('hidden',   !hudState.minimap)
+    // if (elWeaponPanel) elWeaponPanel.classList.toggle('hidden', !hudState.weapon)
 
     if (elStatusRow) {
         elStatusRow.classList.toggle('hidden', !(hudState.health || hudState.armor || hudState.hunger || hudState.thirst))
@@ -156,6 +160,7 @@ function applyVisibility() {
 
     cineTop.classList.toggle('hidden',    !hudState.cinebars)
     cineBottom.classList.toggle('hidden', !hudState.cinebars)
+    if (elCrosshair) elCrosshair.classList.toggle('hidden', !(hudState.crosshair && canShowCrosshair))
 }
 
 function bootHudState() {
@@ -475,21 +480,128 @@ const handlers = {
     },
 
     updateStatus(data) {
+        
+        // ✅ Detect weapon change and reset UI
+        if (window.lastWeaponName !== data.weaponName) {
+            window.lastWeaponName = data.weaponName
+            window.lastAmmo = undefined
+
+            if (elWeaponAmmo) {
+                elWeaponAmmo.textContent = ""
+                elWeaponAmmo.classList.remove("ammo-low", "ammo-reload")
+            }
+        }
+        
         if (data.voice !== undefined) {
             if (voiceRingContainer) {
                 voiceRingContainer.classList.remove('mode-Whisper', 'mode-Normal', 'mode-Shout');
                 voiceRingContainer.classList.add('mode-' + data.voice);
             }
         }
-        if (data.id        !== undefined) elPlayerId.textContent  = data.id
-        if (data.job       !== undefined) elJobLabel.textContent  = data.job
-        if (data.grade     !== undefined) elJobGrade.textContent  = data.grade
-        if (data.cash      !== undefined) elCash.textContent      = data.cash
-        if (data.bank      !== undefined) elBank.textContent      = data.bank
-        if (data.time      !== undefined) elClock.textContent     = data.time
-        if (data.charName  !== undefined) elCharName.textContent  = data.charName
-        if (data.zone      !== undefined) elZone.textContent      = data.zone
-        if (data.direction !== undefined) elDirection.textContent = data.direction
+        if (data.id        !== undefined && elPlayerId)  elPlayerId.textContent  = data.id
+        if (data.job       !== undefined && elJobLabel)  elJobLabel.textContent  = data.job
+        if (data.grade     !== undefined && elJobGrade)  elJobGrade.textContent  = data.grade
+        if (data.cash      !== undefined && elCash)      elCash.textContent      = data.cash
+        if (data.bank      !== undefined && elBank)      elBank.textContent      = data.bank
+        if (data.time      !== undefined && elClock)     elClock.textContent     = data.time
+        if (data.charName  !== undefined && elCharName)  elCharName.textContent  = data.charName
+        if (data.zone      !== undefined && elZone)      elZone.textContent      = data.zone
+        if (data.direction !== undefined && elDirection) elDirection.textContent = data.direction
+        if (data.weaponVisible !== undefined) {
+            const noWeapon =
+                !data.weaponName ||
+                data.weaponName === "" ||
+                data.weaponName === "Unarmed"
+
+            if (noWeapon || !data.weaponVisible) {
+                elWeaponPanel?.classList.add('hidden')
+            } else {
+                elWeaponPanel?.classList.remove('hidden')
+            }
+        }
+        if (data.weaponName !== undefined && elWeaponName) elWeaponName.textContent = data.weaponName 
+        
+        // ================= WEAPON SYSTEM (FINAL FIX) =================
+
+        // ✅ Define weapon type FIRST (IMPORTANT)
+        const weaponNameLower = (data.weaponName || "").toLowerCase()
+
+        const meleeWeapons = [
+            "unarmed","knife","nightstick","hammer","bat","crowbar",
+            "golf club","bottle","dagger","hatchet","knuckle duster",
+            "machete","flashlight","switchblade","pool cue","wrench",
+            "battle axe","stone hatchet","baseball bat"
+        ]
+
+        const isMelee = meleeWeapons.some(w => weaponNameLower.includes(w))
+
+        // ✅ Detect weapon change (fixes delayed ammo bug)
+        if (window.lastWeaponName !== data.weaponName) {
+            window.lastWeaponName = data.weaponName
+            window.lastAmmo = undefined
+
+            if (elWeaponAmmo) {
+                elWeaponAmmo.textContent = ""
+                elWeaponAmmo.classList.remove("ammo-low", "ammo-reload")
+            }
+        }
+
+        // ✅ Handle melee vs gun UI
+        if (isMelee) {
+            elWeaponAmmo.textContent = ""
+            elWeaponAmmo.classList.add("hidden")
+            window.lastAmmo = undefined
+        } else {
+            elWeaponAmmo.classList.remove("hidden")
+
+            if (data.weaponAmmo !== undefined && elWeaponAmmo) {
+                const ammoText = String(data.weaponAmmo || "0/0")
+                elWeaponAmmo.textContent = ammoText
+
+                let ammoValue = 0
+
+                if (ammoText.includes("/")) {
+                    const parts = ammoText.split("/")
+                    ammoValue = parseInt(parts[0].trim()) || 0
+                } else {
+                    ammoValue = parseInt(ammoText) || 0
+                }
+
+                // 🔴 Low ammo
+                if (ammoValue <= 5) {
+                    elWeaponAmmo.classList.add("ammo-low")
+                } else {
+                    elWeaponAmmo.classList.remove("ammo-low")
+                }
+
+                // 💥 Reload flash
+                if (typeof window.lastAmmo === "number" && ammoValue > window.lastAmmo) {
+                    elWeaponAmmo.classList.add("ammo-reload")
+
+                    setTimeout(() => {
+                        elWeaponAmmo.classList.remove("ammo-reload")
+                    }, 300)
+                }
+
+                window.lastAmmo = ammoValue
+            }
+        }
+        
+        if (data.weaponIcon !== undefined) {
+            if (data.weaponIcon) {
+                elWeaponImg.onerror = () => {
+                    elWeaponImg.classList.add('hidden')
+                    elWeaponFallbackIcon.classList.remove('hidden')
+                }
+                elWeaponImg.src = data.weaponIcon
+                elWeaponImg.classList.remove('hidden')
+                elWeaponFallbackIcon.classList.add('hidden')
+            } else {
+                elWeaponImg.src = ''
+                elWeaponImg.classList.add('hidden')
+                elWeaponFallbackIcon.classList.remove('hidden')
+            }
+        }
 
         if (data.street !== undefined || data.crossing !== undefined) {
             if (data.street   !== undefined) elStreet._lastStreet   = data.street
@@ -513,6 +625,10 @@ const handlers = {
         if (data.showStress  !== undefined) stressBubble.classList.toggle('visible',  !!data.showStress)
         if (data.showStamina !== undefined) staminaBubble.classList.toggle('visible', !!data.showStamina)
 
+        if (data.showCrosshair !== undefined) {
+            canShowCrosshair = !!data.showCrosshair
+            applyVisibility()
+        }
         if (data.waypointDist !== undefined) updateWaypointChip(data.waypointDist || null)
 
         const wt = window.__cxThresh || { health: 20, hunger: 15, thirst: 15 }
@@ -579,5 +695,26 @@ window.addEventListener('message', (event) => {
         theWholeHud.classList.remove('inventory-hidden');
     }
 });
+
+// ── Crosshair colour picker ──────────────────────────────────────
+const chColorInput = document.getElementById('crosshairColor')
+const chColorHex   = document.getElementById('crosshairColorHex')
+
+function applyChColor(hex) {
+    if (!hex) return
+    document.documentElement.style.setProperty('--ch-color', hex)
+    if (chColorInput) chColorInput.value = hex
+    if (chColorHex)   chColorHex.textContent = hex
+    try { localStorage.setItem(CH_COLOR_KEY, hex) } catch (_) {}
+}
+
+;(function() {
+    const saved = localStorage.getItem(CH_COLOR_KEY)
+    applyChColor(saved || '#ffffff')
+})()
+
+if (chColorInput) {
+    chColorInput.addEventListener('input', () => applyChColor(chColorInput.value))
+}
 
 bootHudState()
