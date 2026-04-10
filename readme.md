@@ -1,7 +1,8 @@
+
+
 # cx-hud
-
 A modern, highly customizable, and lightweight HUD for **Qbox** and **QBCore** FiveM servers.
-
+![HUD Preview](https://cxsper.dev/assets/cx-hud/images/UI.png)
 ## Features
 
 * **In-Game Settings Menu:** Players can type `/hud` to toggle individual HUD elements, change their avatar, and switch speed units (MPH/KMH) & More - All saves locally per player!
@@ -52,3 +53,7 @@ This opens the settings panel where players can:
 ## Notes
 
 * **Qbox Stress:** If your stress ring sits at 0 and doesn't move when shooting, remember that HUDs only *display* data. You must install a stress system like `jg-stress-addon` to actually do le stress magic!
+
+## More Pics
+![In Car Preview](https://cxsper.dev/assets/cx-hud/images/hud-incar.png)
+![HUD Settings Preview](https://cxsper.dev/assets/cx-hud/images/hudsettings.png)
