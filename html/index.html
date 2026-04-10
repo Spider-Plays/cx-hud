@@ -16,8 +16,12 @@
   <div class="cinebar cinebar-top hidden"    id="cinebarTop"></div>
   <div class="cinebar cinebar-bottom hidden" id="cinebarBottom"></div>
 
-  <div id="hud" class="hidden">
+  <div id="crosshairEl" class="crosshair hidden">
+    <div class="ch-dot"></div>
+  </div>
 
+  <div id="hud" class="hidden">
+<!-- 
     <div class="top-left">
       <div class="glass tl-card">
         <div class="char-portrait" id="comp-portrait">
@@ -36,13 +40,25 @@
           </div>
         </div>
       </div>
-    </div>
+    </div> -->
 
     <div class="top-right">
 
       <div class="tr-logo glass" id="comp-logo">
         <img id="logoImg" class="logo-img hidden" src="" alt="">
         <span class="logo-placeholder hidden" id="logoPlaceholder"><i class="fa-solid fa-shield-halved"></i></span>
+      </div>
+
+      <div class="glass tr-card weapon-card hidden" id="weaponPanel">
+        <div class="weapon-thumb" id="weaponThumb">
+          <img class="weapon-img hidden" id="weaponImg" src="" alt="weapon icon">
+          <i class="fa-solid fa-bullet weapon-fallback-icon" id="weaponFallbackIcon"></i>
+        </div>
+        <div class="weapon-meta">
+          <div class="weapon-name" id="weaponName">Weapon</div>
+          <div class="weapon-ammo" id="weaponAmmo">-- / --</div>
+        </div>
+        
       </div>
 
       <div class="glass tr-card job-card" id="comp-job">
@@ -68,7 +84,7 @@
 
     <div class="minimap-cluster">
 
-      <div class="street-pill glass" id="streetPill">
+      <div class="street-pill glass hidden" id="streetPill">
         <div class="dir-badge" id="direction">N</div>
         <div class="street-copy-wrap">
           <div class="street-copy">
@@ -264,6 +280,10 @@
         <div class="hud-toggle-label"><i class="fa-solid fa-building-columns"></i><div><span>Bank</span><small>Account balance</small></div></div>
         <label class="toggle-switch"><input type="checkbox" id="tog-bank" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
       </label>
+      <label class="hud-toggle-row">
+        <div class="hud-toggle-label"><i class="fa-solid fa-bullseye"></i><div><span>Weapon HUD</span><small>Weapon name + ammo count</small></div></div>
+        <label class="toggle-switch"><input type="checkbox" id="tog-weapon" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+      </label>
 
       <div class="hud-menu-section-label">Minimap &amp; Status Rings</div>
 
@@ -308,6 +328,21 @@
       <label class="hud-toggle-row" style="grid-column:1/-1">
         <div class="hud-toggle-label"><i class="fa-solid fa-film"></i><div><span>Cinematic Bars</span><small>Black bars top &amp; bottom</small></div></div>
         <label class="toggle-switch"><input type="checkbox" id="tog-cinebars"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+      </label>
+
+      <div class="hud-menu-section-label">Crosshair</div>
+
+      <label class="hud-toggle-row">
+        <div class="hud-toggle-label"><i class="fa-solid fa-crosshairs"></i><div><span>Crosshair</span><small>Dot — ranged weapons only</small></div></div>
+        <label class="toggle-switch"><input type="checkbox" id="tog-crosshair"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+      </label>
+
+      <label class="hud-toggle-row">
+        <div class="hud-toggle-label"><i class="fa-solid fa-palette"></i><div><span>Crosshair Colour</span><small>Pick your dot colour</small></div></div>
+        <div class="ch-color-wrap">
+          <input type="color" id="crosshairColor" class="ch-color-input" value="#ffffff">
+          <span class="ch-color-hex" id="crosshairColorHex">#ffffff</span>
+        </div>
       </label>
 
       <div class="hud-menu-section-label">Character Avatar</div>
