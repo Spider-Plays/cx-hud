@@ -24,12 +24,47 @@ return function(State, Utils, readyToRock, Config)
         end)
     end
 
+    --- couldn't do it myself so ported it from minimal-hud, https://github.com/ThatMadCap/minimal-hud
+    local function calculateMinimapGeo()
+        SetBigmapActive(false, false)
+
+        local resX, resY  = GetActiveScreenResolution()
+        local aspectRatio = GetAspectRatio(false)
+        local minimapRawX, minimapRawY
+
+        SetScriptGfxAlign(string.byte('L'), string.byte('B'))
+
+        minimapRawX, minimapRawY = GetScriptGfxPosition(0.000, 0.002 + -0.229888)
+        local width  = resX / (3.48 * aspectRatio)
+        local height = resY / 5.55
+
+        ResetScriptGfxAlign()
+
+        SetScriptGfxAlign(string.byte('L'), string.byte('T'))
+        local szX, szY = GetScriptGfxPosition(0.0, 0.0)
+        ResetScriptGfxAlign()
+
+        return {
+            left   = minimapRawX * resX,
+            top    = minimapRawY * resY,
+            width  = width,
+            height = height,
+            insetX = math.floor(szX * resX + 0.5),
+            insetY = math.floor(szY * resY + 0.5),
+        }
+    end
+
     local function patchMinimap()
         if mapPatched then return end
         if not grabSquaremap() then return end
-        local rx, ry   = GetActiveScreenResolution()
-        local mmOffset = 0.0
-        if rx / ry > 1920 / 1080 then mmOffset = ((1920 / 1080 - rx / ry) / 3.6) - 0.008 end
+
+        local resX, resY = GetActiveScreenResolution()
+        local aspect     = resX / resY
+        local mmOffset   = 0.0
+        if aspect > 1920 / 1080 then
+            mmOffset = ((1920 / 1080 - aspect) / 3.6) - 0.008
+        end
+
         SetMinimapClipType(0)
         SetMinimapComponentPosition('minimap',      'L', 'B',  0.0  + mmOffset, -0.047, 0.1638, 0.183)
         SetMinimapComponentPosition('minimap_mask', 'L', 'B',  0.0  + mmOffset,  0.0,   0.128,  0.20)
@@ -40,7 +75,19 @@ return function(State, Utils, readyToRock, Config)
         mapPatched = true
     end
 
-    -- Show/hide radar based on login state and vehicle presence
+    local lastSafezone = GetSafeZoneSize()
+    CreateThread(function()
+        while true do
+            Wait(2000)
+            local current = GetSafeZoneSize()
+            if math.abs(current - lastSafezone) > 0.001 then
+                lastSafezone = current
+                mapPatched   = false
+                Utils.yeet('setMinimapGeo', calculateMinimapGeo())
+            end
+        end
+    end)
+
     local lastInCar   = false
     local lastCanShow = false
 
@@ -65,5 +112,8 @@ return function(State, Utils, readyToRock, Config)
         end
     end)
 
-    return { patchMinimap = patchMinimap }
+    return {
+        patchMinimap        = patchMinimap,
+        calculateMinimapGeo = calculateMinimapGeo,
+    }
 end

@@ -126,6 +126,7 @@ return function(State, Utils, Vehicle, Minimap, readyToRock, Config)
             speedUnit  = Config.SpeedUnit,
             logo       = Config.Logo,
             redline    = Config.RedlineThreshold,
+            minimapGeo = Minimap.calculateMinimapGeo(),
             thresholds = {
                 health = Config.WarnHealth, hunger = Config.WarnHunger,
                 thirst = Config.WarnThirst, fuel   = Config.WarnFuel,

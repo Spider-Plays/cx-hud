@@ -74,6 +74,17 @@ let hadWaypoint    = false
 let lastGear       = -1
 let gearFlashTimer = null
 
+function applyMinimapGeo(geo) {
+    if (!geo) return
+    const root = document.documentElement.style
+    if (geo.left   != null) root.setProperty('--mm-left', geo.left + 'px')
+    if (geo.top    != null) root.setProperty('--mm-top',  geo.top  + 'px')
+    if (geo.width  != null) root.setProperty('--mm-w',    geo.width  + 'px')
+    if (geo.height != null) root.setProperty('--mm-h',    geo.height + 'px')
+    if (geo.insetX != null) root.setProperty('--sz-inset-x', geo.insetX + 'px')
+    if (geo.insetY != null) root.setProperty('--sz-inset-y', geo.insetY + 'px')
+}
+
 function injectColors(cols) {
     if (!cols) return
     const root = document.documentElement.style
@@ -430,7 +441,12 @@ const handlers = {
         if (data?.thresholds) window.__cxThresh = data.thresholds
         if (data?.redline)    { redlineRpm = data.redline; buildRedlineMarker(redlineRpm) }
         if (data?.logo)       applyLogo(data.logo)
+        applyMinimapGeo(data?.minimapGeo)
         bootHudState()
+    },
+
+    setMinimapGeo(data) {
+        applyMinimapGeo(data)
     },
 
     versionInfo(data) {
@@ -539,5 +555,16 @@ window.addEventListener('message', ev => {
     const { action, data } = ev.data ?? {}
     handlers[action]?.(data)
 })
+
+window.addEventListener('message', (event) => {
+    const data = event.data;
+    if (data.action === 'hideHud') {
+        theWholeHud.classList.add('inventory-hidden');
+    }
+
+    if (data.action === 'showHud') {
+        theWholeHud.classList.remove('inventory-hidden');
+    }
+});
 
 bootHudState()

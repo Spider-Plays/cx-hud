@@ -25,11 +25,15 @@
   --belt-warn:      #ff4466;
   --warn-glow:      rgba(255,60,60,0.55);
   --mm-left:        26px;
-  --mm-bottom:      66px;
+  --mm-top:         794px;
   --mm-w:           315px;
   --mm-h:           200px;
   --logo-w:         120px;
   --logo-h:         40px;
+
+/*safezone insets probably a waste of time*/
+  --sz-inset-x:     0vw;
+  --sz-inset-y:     0vh;
 }
 
 *, *::before, *::after { box-sizing: border-box; user-select: none; }
@@ -40,6 +44,18 @@ body {
   font-family: 'Inter', Arial, sans-serif;
   color: var(--text);
   font-size: 13px;
+}
+
+#hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.25s ease;
+}
+
+#hud.inventory-hidden {
+  opacity: 0;
 }
 
 .hidden { display: none !important; }
@@ -74,8 +90,8 @@ body {
 
 .top-left {
   position: absolute;
-  top: 16px;
-  left: 16px;
+  top: calc(16px + var(--sz-inset-y));
+  left: calc(16px + var(--sz-inset-x));
 }
 
 .tl-card {
@@ -156,8 +172,8 @@ body {
 
 .top-right {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: calc(16px + var(--sz-inset-y));
+  right: calc(16px + var(--sz-inset-x));
   width: 148px;
   display: flex;
   flex-direction: column;
@@ -253,7 +269,7 @@ body {
 .street-pill {
   position: absolute;
   left: var(--mm-left);
-  bottom: calc(var(--mm-bottom) + var(--mm-h) + 8px);
+  top: calc(var(--mm-top) - 53px);
   width: var(--mm-w);
   display: flex;
   align-items: center;
@@ -337,7 +353,7 @@ body {
 .minimap-frame {
   position: absolute;
   left: var(--mm-left);
-  bottom: var(--mm-bottom);
+  top: var(--mm-top);
   width: var(--mm-w);
   height: var(--mm-h);
   pointer-events: none;
@@ -347,12 +363,12 @@ body {
 
 .minimap-border-ring {
   position: absolute;
-  left: calc(var(--mm-left) - 2px);
-  bottom: var(--mm-bottom);
-  width: calc(var(--mm-w) + 4px);
-  height: calc(var(--mm-h) + 1px);
-  border-radius: 14px;
-  border: 0.32rem solid rgba(0, 6, 22, 0.88);
+  left: calc(var(--mm-left) - 3.5px);
+  top: calc(var(--mm-top) - 2.3px);
+  width: calc(var(--mm-w) + 6px);
+  height: calc(var(--mm-h) + 5px);
+  border-radius: 12px;
+  border: 0.35rem solid rgba(0, 6, 22, 0.88);
   box-shadow: 0 0 16px rgba(1, 12, 40, 0.50), 0 0 5px rgba(1, 12, 40, 0.50);
   pointer-events: none;
   z-index: 11;
@@ -361,12 +377,12 @@ body {
 .status-row {
   position: absolute;
   left: var(--mm-left);
-  bottom: 14px;
+  top: calc(var(--mm-top) + var(--mm-h) + 8px);
   width: var(--mm-w);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 2px;
+  gap: 0px;
 }
 
 .status-pill {
@@ -533,8 +549,8 @@ body {
 
 .vehicle-card {
   position: absolute;
-  right: 18px;
-  bottom: 18px;
+  right: calc(18px + var(--sz-inset-x));
+  bottom: calc(18px + var(--sz-inset-y));
   width: 240px;
   background: transparent;
   display: flex;
