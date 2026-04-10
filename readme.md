@@ -52,4 +52,3 @@ This opens the settings panel where players can:
 ## Notes
 
 * **Qbox Stress:** If your stress ring sits at 0 and doesn't move when shooting, remember that HUDs only *display* data. You must install a stress system like `jg-stress-addon` to actually do le stress magic!
-```
