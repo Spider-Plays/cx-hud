@@ -139,6 +139,11 @@ function applyVisibility() {
         const el = document.getElementById('comp-' + key)
         if (el) el.classList.toggle('hidden', !hudState[key])
     }
+    const tlCard = document.querySelector('.tl-card')
+        if (tlCard) {
+            const showTlCard = hudState.portrait || hudState.charname || hudState.playerid
+            tlCard.classList.toggle('hidden', !showTlCard)
+        }
 
     if (whereAmI) whereAmI.classList.toggle('hidden', !hudState.minimap)
     if (wpWrap)   wpWrap.classList.toggle('hidden',   !hudState.minimap)
